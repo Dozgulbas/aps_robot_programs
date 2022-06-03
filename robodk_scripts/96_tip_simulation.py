@@ -103,14 +103,67 @@ def pick_tip(new_target, new_target_app,folder_prog, gripper, ref_frame, i, j):
    new_prog3.RunProgram()
    time.sleep(1.5)
 
+def palletizing_droplet_rows(ref_frame, ref_target, folder_prog, gripper, num_row, distance_x, distance_y, app_height, iter1, iter2):
+
+   #If this function was called for num_row times, break this loop and move to next column
+   if iter2 == num_row:
+      return
+
+   RDK = robolink.Robolink()
+
+   
+   new_target = RDK.AddTarget("Pick_Target_"+str(iter1)+"_"+str(iter2),ref_frame)
+   new_target_pose = robomath.Offset(ref_target.Pose(), -1*iter1*distance_x, iter2*distance_y ,0)
+   new_target.setPose(new_target_pose)
+
+   
+   new_target_app = RDK.AddTarget("App_Target_"+str(iter1)+"_"+str(iter2), ref_frame)
+   new_target_app_pose = robomath.Offset(new_target.Pose(), 0, 0 ,app_height)
+   new_target_app.setPose(new_target_app_pose)
+
+#---------------------------------------------------------------
+   home(folder_prog, gripper, ref_frame, iter1, iter2)
+
+#---------------------------------------------------------------
+   pick_pipette_deck()
+
+#---------------------------------------------------------------
+   pick_tip(new_target, new_target_app, folder_prog, gripper, ref_frame, iter1, iter2)
+
+#---------------------------------------------------------------
+   perform_droplet_exp()
+#---------------------------------------------------------------
+
+   time.sleep(5)
+#---------------------------------------------------------------
+   iter2 += 1
+
+   return palletizing_droplet_rows(ref_frame, ref_target, folder_prog, gripper, num_row, distance_x, distance_y, app_height, iter1, iter2)
+
+
+def palletizing_droplet_columns(ref_frame, ref_target, folder_prog, gripper, num_column, num_row, distance_x, distance_y, app_height, iter1):
+
+   #If this function was called for num_column times, break this loop and complete palletizing
+   if iter1 == num_column:
+      return
+
+   RDK = robolink.Robolink()
+   iter2 = 0
+
+   palletizing_droplet_rows(ref_frame, ref_target, folder_prog, gripper, num_row, distance_x, distance_y, app_height, iter1, iter2)
+
+   iter1 += 1
+   return palletizing_droplet_columns(ref_frame, ref_target, folder_prog, gripper, num_column, num_row, distance_x, distance_y, app_height, iter1)
+
+
 
 def main():
 
    RDK = robolink.Robolink()
 
 
-   column = 12
-   row = 8
+   column = 2
+   row = 2
    distance_x = 9
    distance_y = 9
    app_height = -60
@@ -127,35 +180,9 @@ def main():
    attach_pippete = RDK.Item("Attach_pippette",robolink.ITEM_TYPE_TARGET)
    robot.setPoseTool(gripper)
 
-   # pick_probolink.ITEM_TYPE_PROGRAM_PYTHON)
-   for i in range(column):
-      for j in range(row):
+   iter1 =0
+   palletizing_droplet_columns(ref_frame, ref_target, folder_prog, gripper,column, row, distance_x, distance_y, app_height, iter1)
 
-         new_target = RDK.AddTarget("Pick_Target_"+str(i)+"_"+str(j),ref_frame)
-         new_target_pose = robomath.Offset(ref_target.Pose(),-1*i*distance_x,j*distance_y,0)
-         new_target.setPose(new_target_pose)
-
-         
-         new_target_app = RDK.AddTarget("App_Target_"+str(i)+"_"+str(j),ref_frame)
-         new_target_app_pose = robomath.Offset(new_target.Pose(),0,0,app_height)
-         new_target_app.setPose(new_target_app_pose)
-
-
-#---------------------------------------------------------------
-         home(folder_prog, gripper, ref_frame, i, j)
-
-#---------------------------------------------------------------
-         pick_pipette_deck()
-
-#---------------------------------------------------------------
-         pick_tip(new_target, new_target_app, folder_prog, gripper, ref_frame, i, j)
-
-#---------------------------------------------------------------
-         perform_droplet_exp()
-#---------------------------------------------------------------
-
-         time.sleep(5)
-#---------------------------------------------------------------
 
 
 if __name__ == "__main__":

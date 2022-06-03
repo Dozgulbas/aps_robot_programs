@@ -9,6 +9,6 @@ For this experiment, RoboDK software has been utilized and 3D CAD drawings have 
 `robodk_scripts/96_tip_simulation` This program performs the full exteperement by each time picking up a new tip from the tip bin. 
 # Installation 
 
-To install the RoboDK library in python 
+To install the RoboDK library 
 
 `pip install robodk`

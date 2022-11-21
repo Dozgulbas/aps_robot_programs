@@ -2,7 +2,7 @@ from setuptools import setup
 import os
 from glob import glob
 
-package_name = 'ur5_driver'
+package_name = 'ur3_driver'
 
 setup(
     name = package_name,
@@ -17,14 +17,14 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Kendrick, Doga Ozgulbas',
+    maintainer='Doga Ozgulbas',
     maintainer_email='dozgulbas@anl.gov',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'ur5_driver = ur5_driver.ur5_driver:main',
+            'ur3_driver = ur3_driver.ur3_driver:main',
 
         ],
     },

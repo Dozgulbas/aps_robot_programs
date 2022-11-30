@@ -9,8 +9,6 @@ from multiprocessing.connection import wait
 from copy import deepcopy
 import threading
 from time import sleep
-
-from droplet_exp_locations import locations
 class ur3(UR_DASHBOARD):
     
 
@@ -18,7 +16,7 @@ class ur3(UR_DASHBOARD):
 
         super().__init__(IP=IP, PORT=PORT)
 
-        self.initialize() # Initilialize the robot
+        # self.initialize() # Initilialize the robot
 
         # ur3 SETUP:
         i = 1
@@ -66,6 +64,7 @@ class ur3(UR_DASHBOARD):
         self.empty_tube = [0.15203368788019977, 0.16531582069324421, 0.12185568609417977, 1.4402850302548993, -0.2846256403901101, -0.3468228184833902]
         self.empty_tube_above = [0.15203001904780783, 0.16531236663764431, 0.14222620538915642, 1.4402337440190125, -0.2846450307479814, -0.346876615018759]
 
+
         self.well1 = [0.12772478460859046, 0.21370236710062357, 0.08390608100945282, 1.4380130231592743, -0.2414629895555231, -0.2954608172533908]
         self.well1_above = [0.12773445855037924, 0.21371308008717516, 0.1271232135439438, 1.4380596200664426, -0.24151536289689018, -0.2954919320386042]
         self.trash_bin_above = [0.187412530306272, 0.2868009561100828, 0.12712991727750073, 1.438076830279249, -0.2414934112798892, -0.2954944172453427]
@@ -75,7 +74,10 @@ class ur3(UR_DASHBOARD):
         
 
         # CAMERA SETUP ON EPPICS:
-        # self.cam_acquire =  epics.PV("dp_eiger_xrd4:cam1:Acquire")
+        self.cam_acquire =  epics.PV("8idiARV1:cam1:Acquire")
+        self.cam_image = epics.PV("8idiARV1:Pva1:Image")
+        self.cam_capture =  epics.PV("8idiARV1:Pva1:Capture")
+
         # self.cam_acquire_busy = epics.PV("dp_eiger_xrd4:cam1:AcquireBusy")
         # self.cam_num_images = epics.PV("dp_eiger_xrd4:cam1:NumImages")
         # self.hdf_capture =  epics.PV("dp_eiger_xrd4:HDF1:Capture")
@@ -83,13 +85,13 @@ class ur3(UR_DASHBOARD):
 
         # PIPETTE SETUP:
         self.pipette = epics.PV("8idQZpip:m1.VAL")
-        self.pipette_drop_tip_value = -1.8
-        self.pipette_aspirate_value = 0.5
-        self.pipette_dispense_value = -0.5
-        self.droplet_value = 0.135
+        self.pipette_drop_tip_value = -8
+        self.pipette_aspirate_value = 2.0
+        self.pipette_dispense_value = -2.0
+        self.droplet_value = 0.3
       
         # # TOOL CHANGER SETUP
-        self.tool_changer = epics.PV("8idSMC100PIP:LJT7:1:DO0") #EPICS PV
+        self.tool_changer = epics.PV("8idSMC100PIP:LJT7:1:DO0")
 
     def home_robot(self):
         # ref_frame = p[-0.304700, 0.161802, 0.191856, 0.000000, 0.000000, 0.000000]
@@ -190,7 +192,7 @@ class ur3(UR_DASHBOARD):
         sleep(2)
         # ASPIRATE FIRST SAMPLE
         self.aspirate_pipette()
-        sleep(2)
+        # sleep(1)
         self.ur3.movel(self.sample1_above,self.accel_mss,speed_ms,0,0)
         sleep(1)
         # MOVE TO THE 1ST WELL
@@ -200,7 +202,7 @@ class ur3(UR_DASHBOARD):
         sleep(1)
         # DISPENSE FIRST SAMPLE INTO FIRST WELL
         self.dispense_pipette()
-        sleep(2)
+        # sleep(1)
         self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
         sleep(1)
 
@@ -215,7 +217,7 @@ class ur3(UR_DASHBOARD):
         sleep(2)
         # ASPIRATE SECOND SAMPLE
         self.aspirate_pipette()       
-        sleep(2)
+        # sleep(1)
         self.ur3.movel(self.sample2_above,self.accel_mss,speed_ms,0,0)
         sleep(1)
         # MOVE TO THE 1ST WELL
@@ -225,21 +227,20 @@ class ur3(UR_DASHBOARD):
         sleep(1)
         # DISPENSE SECOND SAMPLE INTO FIRST WELL
         self.dispense_pipette()
-        sleep(2)
+        # sleep(1)
         # MIX SAMPLE
         for i in range(3):
             self.aspirate_pipette()
-            sleep(2)
+            # sleep(1)
             self.dispense_pipette()
-            sleep(2)
+            # sleep(1)
         # Aspirate all the liquid   
         self.aspirate_pipette()
-        sleep(2)
+        # sleep(1)
         self.aspirate_pipette()
-        sleep(2)
+        # sleep(1)
         self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
         sleep(1)
-
 
     def get_tool_changer_status(self):
         
@@ -253,7 +254,6 @@ class ur3(UR_DASHBOARD):
     def unlock_tool_changer(self):
         """Unlock the tool changer"""
         self.tool_changer.put(0)
-        
 
     def take_camera_measurement(self):
         """Controls the camera to take the measurements"""
@@ -262,12 +262,12 @@ class ur3(UR_DASHBOARD):
     def aspirate_pipette(self):
         current_value = self.pipette.get()
         self.pipette.put(float(current_value) + self.pipette_aspirate_value)
-        sleep(5)
+        sleep(1)
 
     def dispense_pipette(self):
         current_value = self.pipette.get()
         self.pipette.put(float(current_value)+ self.pipette_dispense_value)
-        sleep(5)
+        sleep(1)
 
     def create_droplet(self):
         """Drives pipette to create a droplet"""
@@ -278,8 +278,8 @@ class ur3(UR_DASHBOARD):
     def retrieve_droplet(self):
         """Retrieves the droplet back into the pipette tip"""
         current_value = self.pipette.get()
-        self.pipette.put(float(current_value) + self.droplet_value)
-        sleep(5)
+        self.pipette.put(float(current_value) + self.droplet_value + 0.5)
+        sleep(1)
 
     def drop_tip_to_trash(self):
         self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
@@ -287,16 +287,16 @@ class ur3(UR_DASHBOARD):
         self.ur3.movel(self.trash_bin, self.accel_mss, self.speed_ms, 0, 0)
         sleep(2)
         self.eject_tip()
-        sleep(5)
+        sleep(1)
         self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
         sleep(2)
 
     def eject_tip(self):
         """Ejects the pipette tip"""
         self.pipette.put(self.pipette_drop_tip_value)
-        sleep(25)
+        sleep(2)
         self.pipette.put(0)
-        sleep(10)
+        sleep(2)
 
     def empty_tip(self):
         
@@ -309,9 +309,9 @@ class ur3(UR_DASHBOARD):
         sleep(2)
 
         # Dispense everything
-        for i in range(2):
+        for i in range(3):
             self.dispense_pipette()
-            sleep(2)
+            sleep(1)
 
         self.ur3.movel(self.empty_tube_above,self.accel_mss,speed_ms,0,0)
         sleep(1)
@@ -333,6 +333,10 @@ class ur3(UR_DASHBOARD):
         self.drop_tip_to_trash()
         self.home_robot()
         self.place_pipette()
+        self.disconnect_ur_robot()
+
+    def disconnect_ur_robot(self):
+        self.ur3.close()
 
 """
     def pick(self, pick_goal):
@@ -365,8 +369,20 @@ class ur3(UR_DASHBOARD):
 if __name__ == "__main__":
 
     robot = ur3()
+    # robot.pick_pipette()
+    # robot.pick_tip()
+
+    # robot.retrieve_droplet()
     # robot.make_sample()
-    # robot.droplet_exp()
+    # robot.place_pipette()
+    # robot.create_droplet()
+    # robot.pick_pipette()
+    # robot.home_robot()
+    # robot.empty_tip()
+    # robot.drop_tip_to_trash()
+    # robot.disconnect()
+    # robot.unlock_tool_changer()
+    robot.droplet_exp()
     # robot.home_robot()
     # robot.pick_pipette()
     # robot.pick_tip()

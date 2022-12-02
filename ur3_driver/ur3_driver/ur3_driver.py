@@ -11,7 +11,7 @@ import threading
 from time import sleep
 class UR3_8_ID_I(UR_DASHBOARD):
     """ 
-    Description: A class that connects to the UR3e robot located in Argonne National Laboratory - APS 8_ID_I and contains functions to perform automated liquid handling experiments.
+    Description: This class creates a connection to the UR3e robot located in Argonne National Laboratory - APS 8_ID_I and contains functions to perform automated liquid handling experiments.
     Parameters: 
             - IP: IP address of the UR3e robot.
             - PORT: Port number of the UR3e robot to connect the robot teach pendent
@@ -90,6 +90,13 @@ class UR3_8_ID_I(UR_DASHBOARD):
             except:
                 print('Failed attempt #{}'.format(i))
                 i+=1
+
+    def disconnect_robot_connection(self):
+        """
+        Description: Disconnects the socket connection with the UR robot
+        """
+        self.ur3.close()
+        print("Robot connection is closed.")
 
     def home_robot(self):
         """
@@ -225,25 +232,27 @@ class UR3_8_ID_I(UR_DASHBOARD):
         """
         try:
             print("Making a sample using two liquids...")
+            
+            # MOVE TO THE FIRT SAMPLE LOCATION
             speed_ms = 0.1
-            # MOVE WATER LOCATION
             self.ur3.movel(self.sample1_above,self.accel_mss,self.speed_ms,0,0)
             sleep(2)
             self.ur3.movel(self.sample1,self.accel_mss,speed_ms,0,0)
             sleep(2)
+
             # ASPIRATE FIRST SAMPLE
             self.aspirate_pipette()
-            # sleep(1)
             self.ur3.movel(self.sample1_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
+
             # MOVE TO THE 1ST WELL
             self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
             self.ur3.movel(self.well1,self.accel_mss,speed_ms,0,0)
             sleep(1)
+
             # DISPENSE FIRST SAMPLE INTO FIRST WELL
             self.dispense_pipette()
-            # sleep(1)
             self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
 
@@ -251,35 +260,34 @@ class UR3_8_ID_I(UR_DASHBOARD):
             self.drop_tip_to_trash()
             self.pick_tip2()
 
-            # MOVE SILICA LOCATION
+            # MOVE TO THE SECON SAMPLE LOCATION
             self.ur3.movel(self.sample2_above,self.accel_mss,self.speed_ms,0,0)
             sleep(3)
             self.ur3.movel(self.sample2,self.accel_mss,speed_ms,0,0)
             sleep(2)
+
             # ASPIRATE SECOND SAMPLE
             self.aspirate_pipette()       
-            # sleep(1)
             self.ur3.movel(self.sample2_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
+
             # MOVE TO THE 1ST WELL
             self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
             sleep(1)    
             self.ur3.movel(self.well1,self.accel_mss,speed_ms,0,0)
             sleep(1)
+
             # DISPENSE SECOND SAMPLE INTO FIRST WELL
             self.dispense_pipette()
-            # sleep(1)
+
             # MIX SAMPLE
             for i in range(3):
                 self.aspirate_pipette()
-                # sleep(1)
                 self.dispense_pipette()
-                # sleep(1)
+
             # Aspirate all the liquid   
             self.aspirate_pipette()
-            # sleep(1)
             self.aspirate_pipette()
-            # sleep(1)
             self.ur3.movel(self.well1_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
             print("Sample is prepared")
@@ -400,50 +408,63 @@ class UR3_8_ID_I(UR_DASHBOARD):
         """
         Description: Drops the pipette tip by driving the pipette all the way to the lowest point.
         """
-        # Move to the trash bin location
-        self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
-        sleep(2)
-        self.ur3.movel(self.trash_bin, self.accel_mss, self.speed_ms, 0, 0)
-        sleep(2)
-        self.eject_tip()
-        sleep(1)
-        self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
-        sleep(2)
+        try:
+            print("Droping tip to the trash bin...")
+            # Move to the trash bin location
+            self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
+            sleep(2)
+            self.ur3.movel(self.trash_bin, self.accel_mss, self.speed_ms, 0, 0)
+            sleep(2)
+            self.eject_tip()
+            sleep(1)
+            self.ur3.movel(self.trash_bin_above, self.accel_mss, self.speed_ms,0,0)
+            sleep(2)
+        except Exception as err:
+            print("Droping tip to the trash bin failed: ", err)
 
     def eject_tip(self):
         """
         Description: Ejects the pipette tip
         """
-        self.pipette.put(self.pipette_drop_tip_value)
-        sleep(2)
-        self.pipette.put(0)
-        sleep(2)
+        try:
+            print("Ejecting the tip")
+            self.pipette.put(self.pipette_drop_tip_value)
+            sleep(2)
+            self.pipette.put(0)
+            sleep(2)
+        except Exception as err:
+            print("Ejecting tip failed: ", err)
 
     def empty_tip(self):
         """
         Description: Dispenses all the liquid inside pipette tip.
         """
-        speed_ms = 0.5
-        # Moving the robot to the empty tube location
-        self.ur3.movel(self.empty_tube_above,self.accel_mss,self.speed_ms,0,0)
-        sleep(2)
-        speed_ms = 0.1
-        self.ur3.movel(self.empty_tube,self.accel_mss,speed_ms,0,0)
-        sleep(2)
+        try:
+            print("Empting tip...")
+            speed_ms = 0.5  
+            # Moving the robot to the empty tube location
+            self.ur3.movel(self.empty_tube_above,self.accel_mss,self.speed_ms,0,0)
+            sleep(2)
+            speed_ms = 0.1
+            self.ur3.movel(self.empty_tube,self.accel_mss,speed_ms,0,0)
+            sleep(2)
 
-        # Drive the pipette three times to dispense all the liquid inside the pipette tip.
-        for i in range(3):
-            self.dispense_pipette()
+            # Drive the pipette three times to dispense all the liquid inside the pipette tip.
+            for i in range(3):
+                self.dispense_pipette()
+                sleep(1)
+
+            self.ur3.movel(self.empty_tube_above,self.accel_mss,speed_ms,0,0)
             sleep(1)
-
-        self.ur3.movel(self.empty_tube_above,self.accel_mss,speed_ms,0,0)
-        sleep(1)
+        
+        except Exception as err:
+            print("Empting tip failed: ", err)
 
     def droplet_exp(self):
         """
         Description: Runs the full droplet experiment by calling the functions that perform each step in the experiment.
         """
-        
+        print("-*-*-* Starting the droplet experiment *-*-*-")
         self.pick_pipette()
         self.home_robot()
         self.pick_tip()
@@ -458,14 +479,8 @@ class UR3_8_ID_I(UR_DASHBOARD):
         self.drop_tip_to_trash()
         self.home_robot()
         self.place_pipette()
-        self.disconnect_ur_robot()
-
-    def disconnect_ur_robot(self):
-        """
-        Description: Disconnects the socket connection with the UR robot
-        """
-
-        self.ur3.close()
+        print("-*-*-* Droplet experiment is completed *-*-*-")
+        self.disconnect_robot_connection()
 
 
 if __name__ == "__main__":

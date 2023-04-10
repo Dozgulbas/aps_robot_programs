@@ -11,9 +11,9 @@ from launch_ros.substitutions import FindPackageShare
  
 def generate_launch_description():
 
-  pkg_share = FindPackageShare(package='pf400_description').find('pf400_description')
-  default_rviz_config_path = os.path.join(pkg_share, 'config/pf400_rviz_config.rviz')
-  default_urdf_model_path = os.path.join(pkg_share, 'urdf/pf400_module.xacro') 
+  pkg_share = FindPackageShare(package='droplet_description').find('droplet_description')
+  default_rviz_config_path = os.path.join(pkg_share, 'config/droplet_rviz_config.rviz')
+  default_urdf_model_path = os.path.join(pkg_share, 'urdf/droplet.urdf') 
 
   ip = LaunchConfiguration('ip')
   port = LaunchConfiguration('port')
@@ -76,7 +76,7 @@ def generate_launch_description():
     condition=IfCondition(use_robot_state_pub),
     package='robot_state_publisher',
     executable='robot_state_publisher',
-    parameters=[{'use_sim_time': use_sim_time, 'robot_description': Command(['xacro ', urdf_model])}],
+    parameters=[{'use_sim_time': use_sim_time, 'robot_description': urdf_model}],
     arguments=[default_urdf_model_path])
  
   # Launch RViz
@@ -89,11 +89,11 @@ def generate_launch_description():
     arguments=['-d', rviz_config_file])
 
   # Start RealHarware Joint State Publisher Client
-  start_pf400_description_client = Node(
+  start_droplet_description_client = Node(
     condition=UnlessCondition(fake_hardware),
-    package = "pf400_description",
-    executable = 'pf400_description_client',
-    name = 'PF400DescriptionNode',
+    package = "droplet_description",
+    executable = 'droplet_description_client',
+    name = 'dropletDescriptionNode',
     output = 'screen',
     parameters=[
       {'ip':ip},
@@ -119,6 +119,6 @@ def generate_launch_description():
   ld.add_action(start_rviz_cmd)
   ld.add_action(declare_use_ip_cmd)
   ld.add_action(declare_use_port_cmd)
-  ld.add_action(start_pf400_description_client)
+  # ld.add_action(start_droplet_description_client)
  
   return ld

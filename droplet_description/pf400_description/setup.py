@@ -18,7 +18,6 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('config/*'))  
     ],
 
-    install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Doga Ozgulbas',
     maintainer_email='dozgulbas@anl.gov',
